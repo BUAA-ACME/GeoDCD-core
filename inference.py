@@ -41,6 +41,27 @@ def main(args):
             args.N = sample_data.shape[0]
         accelerator.print(f"Auto-detected N={args.N} from dataset")
 
+    # Infer hierarchy from the checkpoint if not provided, so the inference
+    # architecture matches training (the README example omits --hierarchy).
+    if not args.hierarchy:
+        try:
+            ckpt = torch.load(args.model_path, map_location='cpu', weights_only=True)
+            layer_idxs = set()
+            pooler_sizes = {}
+            for k, v in ckpt.items():
+                parts = k.split('.')
+                if len(parts) >= 2 and parts[0] == 'layers' and parts[1].isdigit():
+                    layer_idxs.add(int(parts[1]))
+                if len(parts) >= 3 and parts[0] == 'poolers' and parts[1].isdigit() \
+                        and parts[2] == 'centroids':
+                    pooler_sizes[int(parts[1])] = v.shape[0]
+            num_levels = len(layer_idxs)
+            hierarchy = [pooler_sizes[i] for i in range(num_levels - 1)]
+            args.hierarchy = hierarchy
+            accelerator.print(f"Inferred hierarchy from checkpoint: {hierarchy}")
+        except Exception as e:
+            accelerator.print(f"Could not infer hierarchy ({e}); using empty hierarchy.")
+
     model = GeoDCD(
         N=args.N,
         coords=meta['coords'],
@@ -112,6 +133,8 @@ if __name__ == "__main__":
     parser.add_argument("--hierarchy", type=int, nargs='+', default=[])
     parser.add_argument("--d_model", type=int, default=64)
     parser.add_argument("--num_bases", type=int, default=4)
+    parser.add_argument("--num_workers", type=int, default=4 if os.name != 'nt' else 0,
+                        help="DataLoader workers (default: 4 on Linux/macOS, 0 on Windows)")
     parser.add_argument("--output_dir", type=str, default="./results")
 
     args = parser.parse_args()

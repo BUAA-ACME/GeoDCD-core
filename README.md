@@ -11,6 +11,15 @@ A clean, minimal implementation of the GeoDCD model for hierarchical causal disc
 
 ## Installation
 
+Using `uv` (recommended):
+
+```bash
+uv venv
+uv pip install -r requirements.txt
+```
+
+Or with plain `pip`:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -43,11 +52,15 @@ Train the model on synthetic data:
 ```bash
 # Single GPU
 python train.py --dataset lorenz96 --data_path ./data/synthetic \
-    --hierarchy 16 8 --epochs 100
+    --hierarchy 32 8 --epochs 100
 
 # Multi-GPU with accelerate
 accelerate launch train.py --dataset lorenz96 --data_path ./data/synthetic \
-    --hierarchy 16 8 --epochs 100
+    --hierarchy 32 8 --epochs 100
+
+# ClusterLorenz (4 clusters): best hierarchy is 4
+python train.py --dataset cluster_lorenz --data_path ./data/synthetic \
+    --hierarchy 4 --epochs 100
 ```
 
 Training progress prints epoch loss and causal discovery metrics (F1, AUROC) when ground truth is available. The trained model and metrics JSON are saved to `./results/`.
@@ -70,7 +83,7 @@ Outputs metrics (AUROC, F1, Precision, Recall, SHD) to `metrics.json`.
 | `--dataset` | lorenz96 | Dataset name |
 | `--data_path` | data/synthetic | Data directory |
 | `--replica_id` | 0 | Dataset replica index |
-| `--hierarchy` | [] | Number of clusters per level (e.g., `16 8`) |
+| `--hierarchy` | [] | Number of clusters per level |
 | `--d_model` | 64 | Model dimension |
 | `--epochs` | 100 | Training epochs |
 | `--batch_size` | 64 | Batch size |

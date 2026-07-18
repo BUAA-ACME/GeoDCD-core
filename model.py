@@ -52,7 +52,10 @@ class CausalTransformerBlock(nn.Module):
             mask = self._generate_square_subsequent_mask(T).to(x.device)
             self.register_buffer('causal_mask', mask, persistent=False)
 
-        out = self.transformer(x, mask=self.causal_mask, is_causal=True)
+        # NOTE: self.causal_mask is already an additive causal mask (upper-triangular
+        # -inf). Do NOT also pass is_causal=True: on PyTorch >= 2.1 that raises
+        # "Explicit attn_mask cannot be provided with is_causal=True".
+        out = self.transformer(x, mask=self.causal_mask)
         return self.output_proj(out)
 
 

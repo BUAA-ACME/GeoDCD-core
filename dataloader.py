@@ -72,6 +72,10 @@ def get_data_context(args):
     window_size = getattr(args, 'window_size', 100)
     stride = getattr(args, 'stride', 10)
     batch_size = getattr(args, 'batch_size', 32)
+    # Windows (os.name == 'nt') multiprocessing DataLoader workers frequently
+    # hang/freeze, so default to 0 there. Overridable via --num_workers.
+    _nw = getattr(args, 'num_workers', None)
+    num_workers = _nw if _nw is not None else (4 if os.name != 'nt' else 0)
 
     print(f"Loading {dataset_name} (Replica {replica_id})...")
     data_np, gt_np, coords_np = load_from_disk(base_path, dataset_name, replica_id)
@@ -87,11 +91,11 @@ def get_data_context(args):
 
     train_loader = DataLoader(
         train_ds, batch_size=batch_size, shuffle=True,
-        num_workers=4, pin_memory=True
+        num_workers=num_workers, pin_memory=True
     )
     val_loader = DataLoader(
         val_ds, batch_size=batch_size, shuffle=False,
-        num_workers=4, pin_memory=True
+        num_workers=num_workers, pin_memory=True
     )
 
     meta = {"coords": coords_np, "gt_fine": gt_np}

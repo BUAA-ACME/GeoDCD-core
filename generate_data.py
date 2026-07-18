@@ -113,7 +113,7 @@ def main():
     parser.add_argument('--output_path', type=str, default='data/synthetic',
                         help='Base output directory.')
     parser.add_argument('--T', type=int, default=1000, help='Time steps.')
-    parser.add_argument('--p', type=int, default=32,
+    parser.add_argument('--p', type=int, default=128,
                         help='Total number of variables (nodes).')
     parser.add_argument('--num_groups', type=int, default=4,
                         help='Number of groups for cluster_lorenz.')
